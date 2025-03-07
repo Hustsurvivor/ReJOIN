@@ -21,7 +21,9 @@ class ReJoin(Environment):
         memory,
         mode,
         target_group,
-        run_all
+        run_all,
+        testing=False,
+        save_path=None
     ):
         self.query_to_run = query_to_run
         self.pp = pprint.PrettyPrinter(indent=2)
@@ -43,6 +45,9 @@ class ReJoin(Environment):
         self.query = None
         self.state_vector = None
         self.state = None
+
+        self.testing = testing 
+        self.save_path = save_path
 
         self.running_groups = total_groups != 0
         if total_groups != 0:
@@ -204,6 +209,8 @@ class ReJoin(Environment):
         elif self.running_all:
             self.query = next(self.query_generator, None)  # Read next query
             if self.query is None:
+                if self.testing:
+                    return None 
                 self.query_generator = self.database.get_queries_incremental_all()
                 self.query = next(self.query_generator, None)
             print("File Name: " + self.query["file"])
@@ -291,6 +298,13 @@ class ReJoin(Environment):
             self.state_vector.alias_to_relations,
             self.state_vector.aliases,
         )
+        if self.testing:
+            print(f'save {self.query["file"]}'.center(30, '#')) 
+            import os
+            os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
+            with open(self.save_path,'a')as f:
+                f.write(self.query["file"]+ "#####" + constructed_query.replace("\n", "\t") + '\n')
+                
         cost = self.database.get_reward(constructed_query, self.phase)
         self.memory[self.query["file"]]["costs"].append(cost)
         reward = 1 / cost * 100000

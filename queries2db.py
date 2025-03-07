@@ -54,7 +54,6 @@ for file_name in files:
     )
     # break
 
-
 backup_queries()
 db.conn.commit()
 cursor.close()

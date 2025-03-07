@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-from tensorforce import TensorForceError
 from tensorforce.agents import Agent
 from tensorforce.execution import Runner
 from src.environment import ReJoin
@@ -87,29 +86,10 @@ def print_config(args):
         print("\t", key, "->", arg_map[key])
 
 
-def main():
-
-    args = make_args_parser()
-    # print_config(args)
+def main(args):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler(sys.stdout))
-
-    # # Temporary for quick access
-    # args.groups = 1
-    # args.run_all = False
-    #
-    # args.episodes = 501
-    # args.save_episodes = 3500
-    # args.testing = False
-    # args.target_group = 7
-    # args.restore_agent = True
-    #
-    # args.save_agent =./saved_model/" + path
-
-    # input_path = "./saved_model/" + "V3/group7-1000/"
-    # path = "V3/group7-1500/"
-    # output_path = "./outputs/" + path
 
     # ~~~~~~~~~~~~~~~~~ Setting up the Model ~~~~~~~~~~~~~~~~~ #
 
@@ -130,13 +110,13 @@ def main():
         with open(args.agent_config, "r") as fp:
             agent_config = json.load(fp=fp)
     else:
-        raise TensorForceError("No agent configuration provided.")
+        raise KeyError("No agent configuration provided.")
 
     if args.network_spec is not None:
         with open(args.network_spec, "r") as fp:
             network_spec = json.load(fp=fp)
     else:
-        raise TensorForceError("No network configuration provided.")
+        raise KeyError("No network configuration provided.")
 
     # Set up the PPO Agent
     agent = Agent.from_spec(
@@ -162,7 +142,8 @@ def main():
                 save_dir = os.path.dirname(args.save_agent)
                 if not os.path.isdir(save_dir):
                     try:
-                        os.mkdir(save_dir, 0o755)
+                        # os.mkdir(save_dir, 0o755)
+                        os.makedirs(save_dir, 0o755, exist_ok=True)
                     except OSError:
                         raise OSError("Cannot save agent to dir {} ()".format(save_dir))
 
@@ -202,72 +183,12 @@ def main():
                 print("Converged at episode:", len(eps) - i + 2)
                 return True
 
-    find_convergence(runner.episode_rewards)
-    # plt.figure(1)
-    # plt.hist(runner.episode_rewards)
-    #
-    # plt.figure(2)
-    # plt.plot(runner.episode_rewards, "b.", MarkerSize=2)
-
-    if not os.path.exists(args.outputs):
-        os.makedirs(args.outputs)
-    # Plot recorded costs over all episodes
-    # print(memory)
-    i = 2
-    for file, val in memory.items():
-        i += 1
-        plt.figure(i)
-
-        postgres_estimate = val["postgres_cost"]
-        costs = np.array(val["costs"])
-        max_val = max(costs)
-        min_val = min(costs)
-        plt.xlabel("episode")
-        plt.ylabel("cost")
-        plt.title(file)
-        plt.scatter(
-            np.arange(len(costs)),
-            costs,
-            c="g",
-            alpha=0.5,
-            marker=r"$\ast$",
-            label="Cost",
-        )
-        plt.legend(loc="upper right")
-        plt.scatter(
-            0,
-            [min_val],
-            c="r",
-            alpha=1,
-            marker=r"$\heartsuit$",
-            s=200,
-            label="min cost observed=" + str(min_val),
-        )
-        plt.scatter(
-            0,
-            [max_val],
-            c="b",
-            alpha=1,
-            marker=r"$\times$",
-            s=200,
-            label="max cost observed=" + str(max_val),
-        )
-        plt.legend(loc="upper right")
-        plt.scatter(
-            0,
-            [postgres_estimate],
-            c="c",
-            alpha=1,
-            marker=r"$\star$",
-            s=200,
-            label="postgreSQL estimate=" + str(postgres_estimate),
-        )
-        plt.legend(loc="upper right")
-
-        plt.savefig(args.outputs + file + ".png")
-
-    plt.show(block=True)
-
+    if find_convergence(runner.episode_rewards):
+        print('收敛了!')
+    else:
+        print('未收敛')
 
 if __name__ == "__main__":
-    main()
+    args = make_args_parser()
+    print_config(args)
+    main(args)

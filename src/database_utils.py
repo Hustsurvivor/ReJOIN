@@ -1,5 +1,4 @@
 def get_alias(attr, relations_to_alias, alias):
-
     tmp = attr.split(".")
     relname = tmp[0]
     attrname = tmp[1]
@@ -17,7 +16,7 @@ def get_select_clause(query_ast, relations_to_alias, alias):
 
     select_operator_map = {
         "min": "MIN",
-        "max": "MAX",
+        "max": "MAX"
     }  # to be filled with other possible values
 
     select_stmt = query_ast["select"]
@@ -98,6 +97,18 @@ def construct_stmt(stmt, operator_map, relations_to_alias, alias):
 
             else:
                 rvalue = "'" + lit + "'"
+
+        elif key == "in":  # in
+            lit_list = stmt[key][1]
+            lit = []
+            assert isinstance(lit_list, list)
+            for it in lit_list:
+                if len(it) == 0:
+                    lit.append("'null'")
+                else:
+                    assert "literal" in it
+                    lit.append("'" + it["literal"] + "'")
+            rvalue = "(" + ', '.join(lit) + ")"
 
         elif isinstance(stmt[key][1], int):  # Integer
             rvalue = str(stmt[key][1])

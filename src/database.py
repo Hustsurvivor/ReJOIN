@@ -288,7 +288,8 @@ class Database:
             aliases,
         )
 
-        select_clause = utils.get_select_clause(query_ast, relations_to_alias, alias)
+        # select_clause = utils.get_select_clause(query_ast, relations_to_alias, alias)
+        select_clause = "SELECT COUNT(*)"
         where_clause = utils.get_where_clause(query_ast, relations_to_alias, alias)
 
         limit = ""
